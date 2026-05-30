@@ -1,0 +1,17 @@
+services:
+  backend:
+    build:
+      context: .
+    container_name: wakatoken-backend
+    environment:
+      DATABASE_URL: sqlite:////app/data/wakatoken.db
+      CORS_ORIGINS: "*"
+    ports:
+      - "8000:8000"
+    volumes:
+      - wakatoken_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  wakatoken_data:
+

@@ -1,0 +1,2 @@
+"""wakatoken backend package."""
+
