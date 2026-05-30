@@ -78,8 +78,28 @@ def _model_usage(model: str, data: dict[str, Any]) -> ModelUsageIn:
         cache_creation_tokens=cache_creation_tokens,
         cache_read_tokens=cache_read_tokens,
         total_tokens=total_tokens,
-        total_cost=_float_value(data, "totalCost", "costUSD", "cost_usd", "total_cost"),
+        total_cost=_float_value(data, "totalCost", "costUSD", "cost_usd", "total_cost", "cost"),
     )
+
+
+def _entry_source(data: dict[str, Any], fallback: str) -> str:
+    explicit_source = data.get("source")
+    if explicit_source:
+        return str(explicit_source)
+
+    agent = data.get("agent")
+    if agent and str(agent) != "all":
+        return str(agent)
+
+    metadata = data.get("metadata")
+    if isinstance(metadata, dict):
+        agents = metadata.get("agents")
+        if isinstance(agents, list) and len(agents) == 1:
+            return str(agents[0])
+        if isinstance(agents, list) and len(agents) > 1:
+            return "all"
+
+    return fallback or "ccusage"
 
 
 def _daily_items(raw: dict[str, Any] | list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
@@ -128,7 +148,7 @@ def normalize_ccusage_daily(
                 user_id=user_id,
                 date=parsed_date,
                 project=str(item.get("project") or item.get("instance") or project or "default"),
-                source=str(item.get("source") or item.get("agent") or source or "ccusage"),
+                source=_entry_source(item, source),
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 cache_creation_tokens=cache_creation_tokens,
@@ -141,4 +161,3 @@ def normalize_ccusage_daily(
             )
         )
     return normalized
-
